@@ -35,17 +35,6 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         mForwardButton = (Button) findViewById(R.id.forward_button);
         mForwardButton.setOnClickListener(this);
 
-        // 画像の情報を取得する
-        ContentResolver resolver = getContentResolver();
-        Cursor cursor = resolver.query(
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI, // データの種類
-                null, // 項目(null = 全項目)
-                null, // フィルタ条件(null = フィルタなし)
-                null, // フィルタ用パラメータ
-                null // ソート (null ソートなし)
-        );
-        Log.d("MAIKO_LOG", "Count画面初期表示 : " + cursor.getCount());
-
         // Android 6.0以降の場合
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             // パーミッションの許可状態を確認する
@@ -77,6 +66,16 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
 
     public void getContentsInfo() {
 
+        // 画像の情報を取得する
+        ContentResolver resolver = getContentResolver();
+        cursor = resolver.query(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI, // データの種類
+                null, // 項目(null = 全項目)
+                null, // フィルタ条件(null = フィルタなし)
+                null, // フィルタ用パラメータ
+                null // ソート (null ソートなし)
+        );
+
         if (cursor != null) {
             cursor.moveToFirst();
             // indexからIDを取得し、そのIDから画像のURIを取得する
@@ -104,7 +103,6 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
             getPreviousInfo();
         } else if (v.getId() == R.id.forward_button) {
             getNextInfo();
-            cursor.moveToPosition( cursor.getPosition() + 1);
         }
     }
 
@@ -112,48 +110,31 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
 
         if(!cursor.moveToPrevious()) {
             cursor.moveToLast();
-        } else {
-            cursor.moveToPrevious();
         }
-        int fieldIndex = cursor.getColumnIndex(MediaStore.Images.Media._ID);
-        Long id = cursor.getLong(fieldIndex);
-        Uri imageUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id);
-        //        Log.d("MAIKO_LOG", "URI : " + imageUri.toString());
-        ImageView imageView = (ImageView) findViewById(R.id.slide);
-        imageView.setImageURI(imageUri);
-
-        Log.d("MAIKO_LOG", "button: BACK");
-        Log.d("MAIKO_LOG", "Count戻る : " + cursor.getCount());
-        Log.d("MAIKO_LOG", "URI戻る : " + imageUri.toString());
-        Log.d("MAIKO_LOG", "Position戻る : " + cursor.getPosition());
-        //cursor.close();
+        setImageView();
         }
 
     private void getNextInfo() {
 
         if(!cursor.moveToNext()) {
             cursor.moveToFirst();
-        } else {
-            cursor.moveToNext();
         }
+        setImageView();
+    }
 
+    private void setImageView() {
         int fieldIndex = cursor.getColumnIndex(MediaStore.Images.Media._ID);
         Long id = cursor.getLong(fieldIndex);
         Uri imageUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id);
-        //        Log.d("MAIKO_LOG", "URI : " + imageUri.toString());
         ImageView imageView = (ImageView) findViewById(R.id.slide);
         imageView.setImageURI(imageUri);
-
-        Log.d("MAIKO_LOG", "button: FORWARD");
-        Log.d("MAIKO_LOG", "Count進む : " + cursor.getCount());
-        Log.d("MAIKO_LOG", "URI進む : " + imageUri.toString());
-        Log.d("MAIKO_LOG", "Position進む : " + cursor.getPosition());
-        //cursor.close();
+        Log.d("MAIKO_LOG", "URI : " + imageUri.toString());
+        Log.d("MAIKO_LOG", "Position初期 : " + cursor.getPosition());
     }
 
 
     @Override
-    protected void onStop() {
+    protected void onDestroy() {
         super.onStop();
         cursor.close();
     }
