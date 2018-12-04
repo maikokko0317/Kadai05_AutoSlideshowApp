@@ -11,9 +11,15 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.os.Handler;
+import android.widget.Toast;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 public class MainActivity extends AppCompatActivity  implements View.OnClickListener {
@@ -22,7 +28,13 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
 
     Button mBackButton;
     Button mForwardButton;
+    Button mPlayStopButton;
     Cursor cursor;
+    Timer mTimer;
+    double mTimerSec = 0.0;
+    boolean play_flg = false;
+
+    Handler mHandler = new Handler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +46,9 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
 
         mForwardButton = (Button) findViewById(R.id.forward_button);
         mForwardButton.setOnClickListener(this);
+
+        mPlayStopButton = (Button) findViewById(R.id.play_stop_button);
+        mPlayStopButton.setOnClickListener(this);
 
         // Android 6.0以降の場合
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -57,6 +72,10 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
             case PERMISSIONS_REQUEST_CODE:
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     getContentsInfo();
+                } else {
+                    Toast toast = Toast.makeText(this, "READ_EXTERNAL_STORAGEを許可しないと画像表示できません", Toast.LENGTH_LONG);
+                    toast.setGravity(Gravity.CENTER, 0, 0);
+                    toast.show();
                 }
                 break;
             default:
@@ -103,6 +122,8 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
             getPreviousInfo();
         } else if (v.getId() == R.id.forward_button) {
             getNextInfo();
+        } else if (v.getId() == R.id.play_stop_button) {
+            slideShow();
         }
     }
 
@@ -132,6 +153,35 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         Log.d("MAIKO_LOG", "Position初期 : " + cursor.getPosition());
     }
 
+    private void slideShow() {
+        if (!play_flg) {
+            play_flg = true;
+            mPlayStopButton.setText("停止");
+            mBackButton.setEnabled(false);
+            mForwardButton.setEnabled(false);
+
+            mTimer = new Timer();
+            mTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    mTimerSec += 2.0;
+
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            getNextInfo();
+                        }
+                    });
+                }
+            }, 2000, 2000);
+        } else if (play_flg) {
+            play_flg = false;
+            mPlayStopButton.setText("再生");
+            mBackButton.setEnabled(true);
+            mForwardButton.setEnabled(true);
+            mTimer.cancel();
+        }
+    }
 
     @Override
     protected void onDestroy() {
