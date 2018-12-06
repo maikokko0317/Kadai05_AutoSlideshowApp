@@ -76,6 +76,9 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
                     Toast toast = Toast.makeText(this, "READ_EXTERNAL_STORAGEを許可しないと画像表示できません", Toast.LENGTH_LONG);
                     toast.setGravity(Gravity.CENTER, 0, 0);
                     toast.show();
+                    mPlayStopButton.setEnabled(false);
+                    mBackButton.setEnabled(false);
+                    mForwardButton.setEnabled(false);
                 }
                 break;
             default:
